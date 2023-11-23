@@ -1,9 +1,66 @@
+import logging
+
 from aiogram import types
-from aiogram.dispatcher.filters.builtin import CommandStart
+from data.config import CHANNELS
+from aiogram.types import InlineKeyboardMarkup,InlineKeyboardButton
+from keyboards.inline.subscrtion import channels
+from loader import bot, dp
+from aiogram import types
+from utils.misc import subscription
+from keyboards.default.boglanish_button import boglanish
+import time
+check = InlineKeyboardMarkup(row_width=1)
+@dp.message_handler(commands=['/start'])
+async def start(message: types.Message):
+    await message.answer('Botga xush kelipsiz',reply_markup=boglanish)
+    time.sleep(2)
+    for i in range(100):
+        print(i)
 
-from loader import dp
+@dp.message_handler(commands=['start'])
+@dp.callback_query_handler(text='/start')
+async def show_channels(call: types.CallbackQuery):
+    await call.answer('Botga xush kelipsiz',reply_markup=boglanish)
+    check = InlineKeyboardMarkup(row_width=1)
+    result = str()
+    for channel in CHANNELS:
+        status = await subscription.check(user_id=call.from_user.id,
+                                          channel=channel)
+        channel = await bot.get_chat(channel)
+        if status:
+            result += (f"Assalomu Aleykum {call.from_user.full_name} Botimizga xush kelipsiz")
+
+        else:
+            invite_link = await channel.export_invite_link()
+            check.insert(InlineKeyboardButton(text=f"🤖{channel.title}", url=invite_link))
+            check.insert(InlineKeyboardButton(text="✅Tekshirish",callback_data='check_subs'))
+            result += (f"<b>{channel.title}</b> kanaliga obuna bo'lmagansiz. "
+                       f"<a href='{invite_link}'>Obuna bo'ling</a>\n\n")
+
+    await call.answer(result, disable_web_page_preview=True, reply_markup=check)
 
 
-@dp.message_handler(CommandStart())
-async def bot_start(message: types.Message):
-    await message.answer(f"Salom, {message.from_user.full_name}!")
+
+
+@dp.callback_query_handler(text="check_subs")
+async def checker(call: types.CallbackQuery):
+    check = InlineKeyboardMarkup(row_width=1)
+    await call.answer()
+    await call.message.edit_reply_markup()
+    await call.message.delete()
+    result = str()
+    for channel in CHANNELS:
+        status = await subscription.check(user_id=call.from_user.id,
+                                          channel=channel)
+        channel = await bot.get_chat(channel)
+        if status:
+            result += (f"Assalomu Aleykum {call.from_user.full_name} Botimizga xush kelipsiz")
+            check = ''
+        else:
+            invite_link = await channel.export_invite_link()
+            check.insert(InlineKeyboardButton(text=f"🤖{channel.title}",url=invite_link))
+            result += (f"<b>{channel.title}</b> kanaliga obuna bo'lmagansiz. "
+                       f"<a href='{invite_link}'>Obuna bo'ling</a>\n\n")
+            print(channel)
+            check.insert(InlineKeyboardButton(text='✅Tekshirish',callback_data='check_subs'))
+    await call.message.answer(result, disable_web_page_preview=True,reply_markup=check)
