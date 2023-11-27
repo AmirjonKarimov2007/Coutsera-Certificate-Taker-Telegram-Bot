@@ -4,9 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiogram = "~=2.25"
 environs = "~=8.0.0"
 wikipedia = "*"
+selenium = "*"
+personaldata = "*"
+aiogram = "==2.25"
 
 [dev-packages]
 

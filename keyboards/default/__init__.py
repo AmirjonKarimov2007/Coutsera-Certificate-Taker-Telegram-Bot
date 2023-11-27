@@ -1,1 +1,1 @@
-from .import boglanish_button
+from . import boglanish_button
