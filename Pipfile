@@ -4,11 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-environs = "~=8.0.0"
-wikipedia = "*"
-selenium = "*"
-personaldata = "*"
-aiogram = "==2.25"
+django = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 

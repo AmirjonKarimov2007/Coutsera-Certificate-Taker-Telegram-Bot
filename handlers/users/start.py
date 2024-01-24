@@ -1,25 +1,29 @@
 import logging
 
+import asyncpg
 from aiogram import types
 from data.config import CHANNELS
 from aiogram.types import InlineKeyboardMarkup,InlineKeyboardButton
 from keyboards.inline.subscrtion import channels
-from loader import bot, dp
+from loader import bot, dp,db
 from aiogram import types
 from utils.misc import subscription
 from keyboards.default.boglanish_button import boglanish
 import time
 check = InlineKeyboardMarkup(row_width=1)
-@dp.message_handler(commands=['/start'])
-async def start(message: types.Message):
-    await message.answer('Botga xush kelipsiz',reply_markup=boglanish)
-    time.sleep(2)
-    for i in range(100):
-        print(i)
 
 @dp.message_handler(commands=['start'])
 @dp.callback_query_handler(text='/start')
 async def show_channels(call: types.CallbackQuery):
+    try:
+        user = await db.add_user(
+            telegram_id=call.from_user.id,
+            full_name=call.from_user.full_name,
+            username=call.from_user.username,
+        )
+    except asyncpg.exceptions.UniqueViolationError:
+        user = await db.select_user(telegram_id=call.from_user.id)
+
     await call.answer('Botga xush kelipsiz',reply_markup=boglanish)
     check = InlineKeyboardMarkup(row_width=1)
     result = str()

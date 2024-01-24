@@ -1,9 +1,11 @@
+from utils.db_api.db_commands import Database
 import asyncio
 from builtins import list
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from aiogram.dispatcher import FSMContext
@@ -15,11 +17,13 @@ from keyboards.inline.sertikat_button import sertifikat
 from keyboards.default.boglanish_button import boglanish
 from app import on_startup
 from data.config import ADMINS
-from loader import dp
+from loader import dp,db
 from loader import bot
 from states.personalData import PersonalData
 from aiogram.types import Message, CallbackQuery, ContentType
 from keyboards.inline.sertikat_button import sertifikat_sender
+from aiogram.types import ReplyKeyboardRemove
+
 import datetime
 random_uuid = uuid.uuid4()
 uuid_strings = str(random_uuid)
@@ -31,140 +35,53 @@ async def on_start_command(message: types.Message):
     user_id = message.from_user.id
     user_name = message.from_user.username
     await message.reply(f"Salom, {user_name}! Botimizga xush kelibsiz!")
-
-
-async def wait_for_second_user(message: types.Message):
-    user_id = message.from_user.id
-    user_name = message.from_user.username
-    await message.reply(f"Iltimos, {user_name}! Kutib turing, birinchi foydalanuvchi bilan bog'lanishni kuting.")
-
-
 def gmail_generator():
     random_uuid = uuid.uuid4()
     uuid_strings = str(random_uuid)
     uuid_without_hyphens = uuid_strings.replace("-", "")
     return uuid_without_hyphens
-#
-# @dp.message_handler(text='🔖Sertifikat Olish', state=None)
-# async def certificate(message: types.Message):
-#     await message.reply("Iltimos Sertifikat uchun ism Familiyangizni yuboring!")
-#     await PersonalData.fullName.set()
-#
-# @dp.message_handler(state=PersonalData.fullName)
-# async def getter(message: types.Message, state: FSMContext):
-#     name = message.text
-#     contact_button = types.KeyboardButton("Share Contact", request_contact=True)
-#     contact_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True).insert(contact_button)
-#     # Save the name in the FSMContext for later use
-#     await state.update_data(
-#         {"name": name}
-#     )
-#     await message.answer(f"Iltimos telefon raqamingizni yuboring:",reply_markup=contact_keyboard)
-#     ism_familiya = name
-#     await PersonalData.phoneNum.set()
-# import re
-# @dp.message_handler(content_types='contact',state=PersonalData.phoneNum)
-# async def phone_num(message: types.Message,state: FSMContext):
-#     data = await state.get_data()
-#     name = data.get("name")
-#     # Create a keyboard with the "Share Contact" button
-#     phone_number = message.contact.phone_number
-#     await state.update_data({"phone_number": phone_number})
-#     await message.answer(f"Sizning ismingiz: {name}\n\n va shu nom ostida sertifikat oliniyapdi kutib turing:")
-#
-#     # Send a welcome message with the contact keyboard
-#     await bot.send_message(chat_id=ADMINS[-1],text=f"Assalomu Aleykum Amirjon Yaxshimisiz?\n"
-#                                                    f"Username: @{message.from_user.username} \nsizdan Sertifikat olmoqchi!\n"
-#                                                    f"Sertifikat olmoqchi bo'lgan odamning Ismi:{name}\n\n"
-#                                                    f"Telefon raqami: {phone_number}\n\n"
-#                                                    f"Telegram Id:{message.from_user.id}",reply_markup=sertifikat)
-#
-# @dp.callback_query_handler(text="sertifikat_yes")
-# async def start(call: types.CallbackQuery, state: FSMContext):
-#     ism_pattern = r"Ismi:\s*([^\n]+)"
-#     ism_match = re.search(ism_pattern, call.message.text)
-#
-#     id_pattern = r"Id:\s*([^\n]+)"
-#     id_match = re.search(id_pattern, call.message.text)
-#     user_id = id_match.group(1)
-#
-#     username_pattern = r"Username:\s*([^\n]+)"
-#     username_match = re.search(username_pattern, call.message.text)
-#     username = username_match.group(1)
-#
-#     phone_pattern = r"raqami:\s*([^\n]+)"
-#     phone_match = re.search(phone_pattern, call.message.text)
-#     phone_number = phone_match.group(1)
-#
-#     if user_id:
-#         logging.info(user_id)
-#         data = await state.get_data()
-#         ism_familiya = ism_match.group(1)
-#         print(ism_familiya)
-#         await state.update_data({"id": user_id})
-#         await state.update_data({"phone_number": phone_number})
-#         await state.update_data({"username": username})
-#         options = webdriver.ChromeOptions()
-#         options.add_extension("/home/amirjon/Desktop/course_cert_using_selenium/NopeCHA-CAPTCHA-Solver.crx")
-#         options.add_argument('--no-sandbox')
-#         options.add_argument('--disable-dev-shm-usage')
-#         name = ism_familiya
-#         await state.update_data({"name": name})
-#         email = gmail_generator() + '@gmail.com'
-#         password = "aslkjfhladskjhfkajsdhflkasjd44hfkajsdhfskjdhf"
-#
-#         # Your other logic here
-#         # <<<<<<<<<<<<<<start getting>>>>>>>>>>>>>>
-#         driver = webdriver.Chrome(options=options)
-#         await state.update_data({"id": user_id})
-#
-#         link = await get_certificate(driver, name, email, password)
-#         await asyncio.sleep(2)
-#         await state.update_data({"link": link})
-#
-#         try:
-#             await call.message.edit_reply_markup()
-#             await call.message.delete()
-#             await call.message.answer(f"{name}, seritifikat tayyor ✅\n{link}", reply_markup=sertifikat_sender)
-#             await asyncio.sleep(3)
-#             await PersonalData.sertifikat.set()
-#
-#         except:
-#             await call.message.answer(f"{name} sertifikat tayyorlashda muammo yuz berdi ❌")
-#             await bot.send_message(chat_id=ADMINS[-1],
-#                                    text=f"{name},da sertifikat olishda muammo bo'ldi:{call.from_user.username}")
-#         driver.close()
-#     else:
-#         logging.warning("user_id is None or invalid")
-#
-# @dp.callback_query_handler(text="sertifikat_sender_yes",state=PersonalData.sertifikat)
-# async def yes_or_no(call: types.CallbackQuery,state: FSMContext):
-#     await call.message.edit_reply_markup()
-#     await call.message.delete()
-#     data = await state.get_data()
-#     user_id = data.get("id")
-#     name = data.get("name")
-#     link = data.get("link")
-#     username = data.get("username")
-#     phone_number = data.get("phone_number")
-#     await call.message.answer(f"▪️Ism Famliya:<b>{name}</b>\n\n"
-#                               f"🔗Sertifikat linki:<b>{link}</b>\n\n"
-#                               f"👤Telegram foydalanuvchi: <b>{username}</b>\n\n"
-#                               f"📞Telefon raqami: {phone_number}\n\n"
-#                               f"🆔Foydalanuvchi id: {user_id}\n\n\n"
-#                               f"<b>✅Sertifikat Muvaffaqiyatli Taqdim etildi</b>")
-#     await bot.send_message(chat_id=user_id, text=f"{name},Nomi ostidagi sertifikat tayyor ✅\n\n{link}")
-#     await state.finish()
-# ...
+
 @dp.message_handler(text='🔖Sertifikat Olish',state=None)
 async def get_fullname(message: types.Message, state: FSMContext):
+    await message.reply(f"Assalomu Aleykum Xurmatli Botimiz Foydalanuvchisi!\n"
+                        f"Bizning botimizga 15ming som tolov qiling\n"
+                        f"va o'zingizning coursera.org websitedagi sertifikatingizga ega bo'ling\n\n\n\n"
+                        f"Karta raqami:9860080151866938\n\n"
+                        f"Iltimos chekni rasm tarzida yuboring aks holda bizga arizangiz kelmaydi\n\n ishonch uchun: @Uzbekcoders_uz_sertifikatlar \n"
+                        f"Hamma Olingan sertifikatlar juda yerda saqlanib boriladi",reply_markup=ReplyKeyboardRemove())
+    await PersonalData.next()
+@dp.message_handler(content_types='photo',state=PersonalData.sertificat_chek)
+async def get_check(message: types.Message, state: FSMContext):
+    telegram_id = int(message.from_user.id)
+    ism_familiya = message.from_user.full_name
+
+    photo = message.photo[-1]
+    file_id = photo.file_id
+    await db.add_product(
+        telegram_id=telegram_id,
+        ism_familiya=None,
+        phone_number=None,
+        email=None,
+        password=None,
+        certificate_link=None,
+        chek=file_id,
+    )
+
+    print('foydalanuvchi bazaga qoshildi')
+    await state.update_data(file_id = file_id)
     await message.reply("Ilimos ismingizni kiriting va shu nom ostida sertifikat olinadi!")
     await PersonalData.next()
+
+
 @dp.message_handler(state=PersonalData.fullName)
 async def process_full_name(message: types.Message, state: FSMContext):
     # Assuming the user's full name is provided in the message text
+    user_data = await state.get_data()
+    file_id = user_data['file_id']
     full_name = message.text
-
+    telegram_id = message.from_user.id
+    user = await db.select_user_certificate(chek=file_id)
+    await db.update_certificate_fullname(ism_familiya=full_name,chek=user['chek'])
     # Save the full name in the state
     await state.update_data(full_name=full_name)
     contact_button = types.KeyboardButton("Share Contact", request_contact=True)
@@ -176,11 +93,11 @@ async def process_full_name(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types='contact',state=PersonalData.phoneNum)
 async def process_phone_number(message: types.Message, state: FSMContext):
     user_data = await state.get_data()
-    message_id = user_data.get('message_id')
     # Assuming the user's phone number is provided in the message text
     phone_number = message.contact.phone_number
     username= message.from_user.username
     user_id = message.from_user.id
+    await db.update_certificate_phone_number(phone_number=phone_number, telegram_id=user_id)
     await state.update_data(phone_number=phone_number)
     await state.update_data(username = username)
     await state.update_data(user_id = user_id)
@@ -188,28 +105,26 @@ async def process_phone_number(message: types.Message, state: FSMContext):
     fullname = user_data['full_name']
     phone_number = user_data['phone_number']
     user_id = user_data['user_id']
+    file_id = user_data['file_id']
     # Save the phone number in the state
     await message.reply("Iltimos Kuting! Sizning Sertifikat olish buyicha arizangiz ko'rib chiqiliyapdi agar admin ruxsat bersa sizga sertifikat olinadi!")
-    xabar = await bot.send_message(chat_id=ADMINS[-1], text=f"Assalomu Aleykum Amirjon Yaxshimisiz?\n"
+    xabar = await bot.send_photo(chat_id=ADMINS[-1],photo=file_id, caption=f"Assalomu Aleykum Amirjon Yaxshimisiz?\n"
                                                        f"Username: @{username} \nsizdan Sertifikat olmoqchi!\n"
                                                        f"Sertifikat olmoqchi bo'lgan odamning Ismi:{fullname}\n\n"
                                                        f"Telefon raqami: {phone_number}\n\n"
-                                                       f"Telegram Id:{user_id}",reply_markup=sertifikat)
+                                                       f"Telegram Id:{file_id}",reply_markup=sertifikat)
+
     await asyncio.sleep(2)
     await bot.pin_chat_message(chat_id=ADMINS[-1], message_id=xabar.message_id)
     await state.finish()
+
 @dp.message_handler(content_types=ContentType.PINNED_MESSAGE)
 async def delete_pin_notification(message: types.Message):
     await message.delete()
 @dp.callback_query_handler(text="sertifikat_yes")
 async def process_certificate_sender(call: types.CallbackQuery, state: FSMContext):
-    # Assuming the certificate sender information is provided in the message text
-    # user_data = await state.get_data()
-    # ism_familiya = user_data['full_name']
-    # phone_number = user_data['phone_number']
-    # user_id = user_data['user_id']
-    # username = user_data['username']
-    message_text = call.message.text
+
+    message_text = call.message.caption
 
     id_pattern = r"Id:\s*([^\n]+)"
     id_match = re.search(id_pattern, message_text)
@@ -233,12 +148,14 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
         logging.info(user_id)
         print(ism_familiya)
         options = webdriver.ChromeOptions()
-        options.add_extension("/home/amirjon/Desktop/course_cert_using_selenium/NopeCHA-CAPTCHA-Solver.crx")
+        options.add_extension('/home/amirjon/Desktop/NopeCHA-CAPTCHA-Solver.crx')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         name = ism_familiya
         email = gmail_generator() + '@gmail.com'
+        await db.update_certificate_email(email=email,chek=user_id)
         password = "aslkjfhladskjhfkajsdhflkasjd44hfkajsdhfskjdhf"
+        await db.update_certificate_password(password=password,chek=user_id)
 
         # Your other logic here
         # <<<<<<<<<<<<<<start getting>>>>>>>>>>>>>>
@@ -248,6 +165,9 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
         await asyncio.sleep(2)
 
         try:
+            await db.update_certificate_link(certificate_link=link,chek=user_id)
+            id = await db.select_user_certificate(chek=user_id)
+            user_id = id.get_certificated['telegram_id']
             await call.message.edit_reply_markup()
             await call.message.delete()
             await call.message.answer(f"Assalomu Aleykum Amirjon\n"
@@ -270,7 +190,21 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
 
     # Process the collected data as needed
     # await message.reply(f"Ma'lumotlar saqlandi: {user_data['user_id']}")
-
+@dp.callback_query_handler(text="sertifikat_no")
+async def cencel_certificate(call: types.CallbackQuery):
+    message_text = call.message.caption
+    print(message_text)
+    id_pattern = r"Id:\s*([^\n]+)"
+    id_match = re.search(id_pattern, message_text)
+    user_id = id_match.group(1)
+    await bot.send_message(chat_id=user_id,text=f"Adminlar sizning arizangizni qabul qilishmadi\n"
+                                                f"iltimos tolov cheki va ism familiyangizga e'tibor berib qaytadan jo'nating\n"
+                                                f"Muammolar nimadan kelib chiqishi mumkin:\n"
+                                                f"To'ov summasi aytilgan miqdorda bo'lmasligidan\n"
+                                                f"Ism familiya noto'g'ri kiritilganligidan\n"
+                                                f"To'lov chekini rasm sheklida yoki umuman yubormaslikdan\n\n"
+                                                f"agar muammolar bo'lsa @Amirjon_Karimov ga murojat qiling")
+    await call.message.edit_reply_markup()
 @dp.callback_query_handler(text='sertifikat_sender_yes')
 async def process_certificate_sender(call: types.CallbackQuery, state: FSMContext):
 
@@ -304,7 +238,7 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
                               f"📞Telefon raqami: {phone_number}\n\n"
                               f"🆔Foydalanuvchi id: {user_id}\n\n\n"
                               f"<b>✅Sertifikat Muvaffaqiyatli Taqdim etildi</b>")
-    await bot.send_message(chat_id=user_id,text=f"{ism_familiya},Nomi ostidagi sertifikat tayyor ✅\n\n{link}\n\n\n\n🤝Qo'llab quvvatlash uchun\n\nAmirjon Karimov\n👉9760080151866938",reply_markup=boglanish)
+    await bot.send_message(chat_id=user_id,text=f"{ism_familiya},Nomi ostidagi sertifikat tayyor ✅\n\n{link}\n\n\n\n🤝Qo'llab quvvatlash uchun\n\nAmirjon Karimov\n👉9860080151866938",reply_markup=boglanish)
     CHANNEL_ID = '@Uzbekcoders_uz_sertifikatlar'
     await bot.send_message(chat_id=CHANNEL_ID, text=f"▪️Ism Famliya:<b>{ism_familiya}</b>\n\n"
                               f"🔗Sertifikat linki:<b>{link}</b>\n\n"
@@ -374,6 +308,7 @@ async def sign_in(driver, fullname, email, password):
             EC.element_to_be_clickable((By.XPATH, '/html/body/div[6]/div/div/section/section/div[1]/form/button'))
             or EC.element_to_be_clickable((By.ID, 'loginButton'))
         )
+        time.sleep(1)
         login_btn.click()
         print('submit bosilmadi')
     try:
@@ -418,11 +353,9 @@ async def enroll(driver, name, email, password):
         pass
 async def resume_assignment(driver):
     try:
-        driver.get(
-            'https://www.coursera.org/learn/youtube-small-business-marketing/exam/fEJPQ/graded-quiz-test-your-project-understanding/attempt')
-        await asyncio.sleep(4)
-        resume_btn = driver.find_element(By.CLASS_NAME,
-                                         "cds-105.cds-button-disableElevation.cds-button-primary.css-k93wf6")
+        driver.get('https://www.coursera.org/learn/youtube-small-business-marketing/exam/fEJPQ/graded-quiz-test-your-project-understanding/attempt')
+        await asyncio.sleep(10)
+        resume_btn = driver.find_element(By.CLASS_NAME,"cds-105")
 
         # Scroll into view before clicking
         driver.execute_script("arguments[0].scrollIntoView(true);", resume_btn)
@@ -431,7 +364,7 @@ async def resume_assignment(driver):
         # Click the button using JavaScript
         driver.execute_script("arguments[0].click();", resume_btn)
         await asyncio.sleep(3)
-        close_btn = WebDriverWait(driver, 30).until(
+        close_btn = WebDriverWait(driver, 40).until(
             EC.element_to_be_clickable((By.XPATH, "/html/body/div[7]/div[3]/div/div/div[2]/div[3]/div/button"))
         )
         # close_btn= driver.find_element(By.XPATH, '/html/body/div[7]/div[3]/div/div/div[2]/div[3]/div/button')
@@ -440,9 +373,9 @@ async def resume_assignment(driver):
         print('passet')
 
     except:
-        resume_btn = driver.find_element(By.CLASS_NAME,
-                                         "cds-105.cds-button-disableElevation.cds-button-primary.css-k93wf6")
-
+        element = driver.find_element(By.CLASS_NAME,'cds-105')
+    # Now you can interact with the element
+        element.click()
         # Scroll into view before clicking
         driver.execute_script("arguments[0].scrollIntoView(true);", resume_btn)
         await asyncio.sleep(1)
@@ -450,10 +383,7 @@ async def resume_assignment(driver):
         # Click the button using JavaScript
         driver.execute_script("arguments[0].click();", resume_btn)
         await asyncio.sleep(3)
-        close_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, "/html/body/div[6]/div[3]/div/div/div[1]/button"))
-        )
-        close_button.click()
+        
         # close_btn = driver.find_element(By.XPATH, '/html/body/div[6]/div[3]/div/div/div[1]/button')
         # close_btn.click()
         await asyncio.sleep(3)
@@ -549,14 +479,16 @@ async def name_verification(driver, name):
     except:
         print('Name verificationda error bor')
 async def download(driver):
-    driver.get('https://www.coursera.org/learn/youtube-small-business-marketing/home/week/1')
-    await asyncio.sleep(5)
-    href = driver.find_element(By.XPATH,
-                               '//*[@id="main"]/div/div/div/div/div/div/div[2]/div[3]/div/div[1]/div[2]/div[2]/a')
-    hreff = href.get_attribute('href')
-    print("href", hreff)
-    return hreff
+    button_element = driver.find_element_by_xpath('//div[@class="cds-105 cds-button-disableElevation cds-button-secondary css-f58lox"]')
 
+    # Get the href attribute value
+    href_value = button_element.get_attribute("href")
+
+    # Print the href value
+    print("Button Href:", href_value)
+
+    # Click the button
+    button_element.click()
 
 # async def cleanup():
 #     # Close the browser
