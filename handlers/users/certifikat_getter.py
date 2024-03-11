@@ -167,7 +167,8 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
         try:
             await db.update_certificate_link(certificate_link=link,chek=user_id)
             id = await db.select_user_certificate(chek=user_id)
-            user_id = id.get_certificated['telegram_id']
+            user_id = id['telegram_id']
+            print(user_id)
             await call.message.edit_reply_markup()
             await call.message.delete()
             await call.message.answer(f"Assalomu Aleykum Amirjon\n"
@@ -479,16 +480,15 @@ async def name_verification(driver, name):
     except:
         print('Name verificationda error bor')
 async def download(driver):
-    button_element = driver.find_element_by_xpath('//div[@class="cds-105 cds-button-disableElevation cds-button-secondary css-f58lox"]')
-
-    # Get the href attribute value
-    href_value = button_element.get_attribute("href")
-
-    # Print the href value
-    print("Button Href:", href_value)
-
-    # Click the button
-    button_element.click()
+    driver.get('https://www.coursera.org/learn/youtube-small-business-marketing/home/week/1')
+    x = driver.find_element(By.XPATH,'/html/body/div[2]/div/div[1]/div[1]/div/div[2]/div[2]/a')
+    x.click()
+    await asyncio.sleep(5)
+    # a = input()
+    href = driver.find_element(By.XPATH,'/html/body/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/main/div/div/div/div/div/div/div[2]/div[2]/div/div[1]/div[2]/div[2]/div/a')
+    hreff = href.get_attribute('href')
+    print("href", hreff)
+    return hreff
 
 # async def cleanup():
 #     # Close the browser
