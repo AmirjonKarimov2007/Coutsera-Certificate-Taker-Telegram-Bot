@@ -33,3 +33,6 @@ urllib3==2.1.0
 wikipedia==1.4.0
 wsproto==1.2.0
 yarl==1.9.3
+django
+djang-jazzmin
+

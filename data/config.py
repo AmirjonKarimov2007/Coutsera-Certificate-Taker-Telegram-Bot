@@ -14,4 +14,4 @@ DB_NAME = env.str("DB_NAME")
 DB_HOST = env.str("DB_HOST")
 
 
-CHANNELS = ["@Amirjon_Karimov_Blog"]
+CHANNELS = ["@BytefyCompany"]

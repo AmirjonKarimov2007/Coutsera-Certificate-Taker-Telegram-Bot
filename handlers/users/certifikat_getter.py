@@ -148,7 +148,7 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
         logging.info(user_id)
         print(ism_familiya)
         options = webdriver.ChromeOptions()
-        options.add_extension('/home/amirjon/Desktop/NopeCHA-CAPTCHA-Solver.crx')
+        options.add_extension('Buster-Captcha-Solver-for-Humans.crx')
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         name = ism_familiya
@@ -160,6 +160,7 @@ async def process_certificate_sender(call: types.CallbackQuery, state: FSMContex
         # Your other logic here
         # <<<<<<<<<<<<<<start getting>>>>>>>>>>>>>>
         driver = webdriver.Chrome(options=options)
+        # driver.maximize_window()
 
         link = await get_certificate(driver, name, email, password)
         await asyncio.sleep(2)
@@ -198,6 +199,9 @@ async def cencel_certificate(call: types.CallbackQuery):
     id_pattern = r"Id:\s*([^\n]+)"
     id_match = re.search(id_pattern, message_text)
     user_id = id_match.group(1)
+
+    id = await db.select_user_certificate(chek=user_id)
+    user_id = id['telegram_id']
     await bot.send_message(chat_id=user_id,text=f"Adminlar sizning arizangizni qabul qilishmadi\n"
                                                 f"iltimos tolov cheki va ism familiyangizga e'tibor berib qaytadan jo'nating\n"
                                                 f"Muammolar nimadan kelib chiqishi mumkin:\n"
@@ -257,6 +261,7 @@ async def get_certificate(driver, name, email, password):
     # await cleanup()
     return link
 
+from selenium.webdriver.support import expected_conditions as EC
 
 async def sign_in(driver, fullname, email, password):
     driver.get("https://www.coursera.org/projects/youtube-small-business-marketing?action=enroll&authMode=signup")
@@ -304,6 +309,7 @@ async def sign_in(driver, fullname, email, password):
 
         login_btn.click()
         print("submitni bosish muvaffaqiyatli amalga oshdi")
+
     except:
         login_btn = WebDriverWait(driver, 60).until(
             EC.element_to_be_clickable((By.XPATH, '/html/body/div[6]/div/div/section/section/div[1]/form/button'))
@@ -312,6 +318,13 @@ async def sign_in(driver, fullname, email, password):
         time.sleep(1)
         login_btn.click()
         print('submit bosilmadi')
+
+    try:
+        driver.switch_to.default_content()
+        WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.CSS_SELECTOR,"//iframe[@title='recaptcha challenge']")))
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, ''))).click()    
+    except:
+        print('captchadan o\tolmadi')
     try:
         WebDriverWait(driver, 60).until(
             EC.url_to_be('https://www.coursera.org/projects/youtube-small-business-marketing?action=enroll')
@@ -481,10 +494,12 @@ async def name_verification(driver, name):
         print('Name verificationda error bor')
 async def download(driver):
     driver.get('https://www.coursera.org/learn/youtube-small-business-marketing/home/week/1')
+    # driver.refresh()
+    await asyncio.sleep(3)
     x = driver.find_element(By.XPATH,'/html/body/div[2]/div/div[1]/div[1]/div/div[2]/div[2]/a')
     x.click()
-    await asyncio.sleep(5)
-    # a = input()
+
+
     href = driver.find_element(By.XPATH,'/html/body/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/main/div/div/div/div/div/div/div[2]/div[2]/div/div[1]/div[2]/div[2]/div/a')
     hreff = href.get_attribute('href')
     print("href", hreff)
